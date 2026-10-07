@@ -1,0 +1,26 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Environment variables & secrets (NEVER COMMIT)
+.env
+.env.local
+*.env
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Temporary logs
+*.log
