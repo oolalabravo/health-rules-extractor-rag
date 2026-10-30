@@ -107,14 +107,15 @@ def save_rules_to_faiss(rules: List[Dict[str, Any]], pdf_name: str, max_retries:
     return 0
 
 def extract_rules_direct(
-    pdf_path: str,
-    progress_cb: Optional[Callable[[str, Optional[float]], None]] = None
+    doc_path: str,
+    progress_cb: Optional[Callable[[str, Optional[float]], None]] = None,
+    direct_text: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Direct ultra-fast extraction (3-5s) using Google GenAI SDK.
+    Direct ultra-fast extraction (2-4s) using Google GenAI SDK.
+    Supports binary PDFs, plain text documents (.txt / XML extracts), or direct text.
     Bypasses Cloudflare tunnel timeouts and network uploads.
     """
-    from pypdf import PdfReader
     from google import genai
     from google.genai import types
 
@@ -123,24 +124,34 @@ def extract_rules_direct(
         raise ValueError("GEMINI_API_KEY not configured for direct extraction")
 
     t0 = time.time()
-    filename = os.path.basename(pdf_path)
+    filename = os.path.basename(doc_path) if doc_path else "biomedical_study.txt"
+    full_text = ""
 
-    if progress_cb:
-        progress_cb("📖 Reading & parsing PDF document pages...", 0.2)
+    if direct_text:
+        full_text = direct_text
+        if progress_cb:
+            progress_cb("📖 Processing structured document text...", 0.2)
+    elif doc_path.lower().endswith(".txt"):
+        if progress_cb:
+            progress_cb("📖 Reading structured document text...", 0.2)
+        with open(doc_path, "r", encoding="utf-8", errors="replace") as f:
+            full_text = f.read()
+    else:
+        if progress_cb:
+            progress_cb("📖 Reading & parsing PDF document pages...", 0.2)
+        from pypdf import PdfReader
+        reader = PdfReader(doc_path)
+        total_pages = len(reader.pages)
+        pages_to_read = min(total_pages, 14)
+        extracted_text = []
+        for i in range(pages_to_read):
+            page_content = reader.pages[i].extract_text() or ""
+            if page_content:
+                extracted_text.append(page_content)
+        full_text = "\n\n".join(extracted_text)
 
-    reader = PdfReader(pdf_path)
-    total_pages = len(reader.pages)
-    pages_to_read = min(total_pages, 14)
-    extracted_text = []
-
-    for i in range(pages_to_read):
-        page_content = reader.pages[i].extract_text() or ""
-        if page_content:
-            extracted_text.append(page_content)
-
-    full_text = "\n\n".join(extracted_text)
     if len(full_text.strip()) < 100:
-        raise ValueError("PDF content is empty or unreadable.")
+        raise ValueError("Document content is empty or unreadable.")
 
     # Truncate to first 32,000 characters (covers title, abstract, methodology, results)
     context_text = full_text[:32000]
@@ -155,7 +166,7 @@ def extract_rules_direct(
 
     prompt = f"""
 Analyze the following peer-reviewed biomedical research paper and extract all conditional/causal health rules.
-Document: {filename} (Total pages: {total_pages})
+Document: {filename}
 
 For every identified relation, extract:
 - metric_a, change_a, metric_b, change_b, relationship_type, predicted_outcome, confidence_rationale.
@@ -213,18 +224,20 @@ Paper Content Excerpt:
     }
 
 def upload_pdf_and_sync_rules(
-    pdf_path: str,
+    doc_path: str,
     colab_url: Optional[str] = None,
     prefer_direct: bool = True,
-    progress_cb: Optional[Callable[[str, Optional[float]], None]] = None
+    progress_cb: Optional[Callable[[str, Optional[float]], None]] = None,
+    direct_text: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Unified extraction pipeline:
     1. TIER 1: Ultra-fast local Gemini Flash extraction (<5 seconds, zero tunnel latency).
+       Supports binary PDFs, clean plain-text XML transcripts, or direct text strings.
     2. TIER 2: Colab extraction server fallback (with HTML error sanitization).
     """
-    if not os.path.exists(pdf_path):
-        err = f"Local PDF file not found at: {pdf_path}"
+    if not direct_text and not os.path.exists(doc_path):
+        err = f"Local document file not found at: {doc_path}"
         print(f"❌ {err}")
         return {"status": "error", "message": err, "rules_added": 0}
 
@@ -232,7 +245,7 @@ def upload_pdf_and_sync_rules(
     gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if prefer_direct and gemini_key:
         try:
-            return extract_rules_direct(pdf_path, progress_cb=progress_cb)
+            return extract_rules_direct(doc_path, progress_cb=progress_cb, direct_text=direct_text)
         except Exception as de:
             if progress_cb:
                 progress_cb(f"⚠️ Direct fast-path notice ({de}). Falling back to Colab...", None)

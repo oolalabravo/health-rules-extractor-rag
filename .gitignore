@@ -24,3 +24,6 @@ ENV/
 
 # Temporary logs
 *.log
+
+# Downloaded literature papers (large binary PDFs)
+RESEARCH PAPERS/

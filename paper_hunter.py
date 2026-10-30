@@ -7,7 +7,7 @@ import urllib.request
 import urllib.parse
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 # Windows UTF-8 console output guard
 if hasattr(sys.stdout, "reconfigure"):
@@ -132,7 +132,8 @@ def search_arxiv(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
                 "authors": authors,
                 "year": published,
                 "pdf_url": pdf_url,
-                "doi": doi
+                "doi": doi,
+                "pmcid": None
             })
     except Exception as e:
         print(f"⚠️ arXiv search notice: {e}")
@@ -166,7 +167,7 @@ def search_europe_pmc(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
 
             pdf_url = None
             if pmcid:
-                pdf_url = f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/pdf/"
+                pdf_url = f"https://europepmc.org/articles/{pmcid}?pdf=render"
 
             papers.append({
                 "source": "Europe PMC",
@@ -175,7 +176,8 @@ def search_europe_pmc(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
                 "authors": authors,
                 "year": year,
                 "pdf_url": pdf_url,
-                "doi": doi
+                "doi": doi,
+                "pmcid": pmcid
             })
     except Exception as e:
         print(f"⚠️ Europe PMC notice: {e}")
@@ -205,89 +207,138 @@ def fetch_candidate_papers(query: str, max_count: int = 5) -> List[Dict[str, Any
     return deduped[:max_count]
 
 # ==========================================
-# 3. DEFENSIVE STREAMING DOWNLOADER
+# 3. INTELLIGENT MULTI-SOURCE DOCUMENT RESOLVER
 # ==========================================
 
-def download_paper_pdf(paper: Dict[str, Any], progress_cb: Optional[Any] = None) -> Optional[str]:
-    """
-    Downloads paper PDF with real-time streaming progress and strict
-    binary magic-byte verification to reject HTML/abstract paywall pages.
-    """
-    url = paper.get("pdf_url")
-    if not url:
-        print(f"  ❌ No direct download URL available for: {paper['title'][:60]}")
-        return None
-
-    clean_name = slugify(paper["title"])[:80] + ".pdf"
-    target_path = os.path.join(PAPERS_DIR, clean_name)
-
-    # Check if a valid PDF is already cached locally
-    if os.path.exists(target_path) and os.path.getsize(target_path) > 5000:
-        with open(target_path, "rb") as test_f:
-            header = test_f.read(10)
-            if header.startswith(b"%PDF"):
-                size_kb = os.path.getsize(target_path) / 1024
-                print(f"  [1/4] 📄 PDF cached locally ({size_kb:.1f} KB): {clean_name}")
-                return target_path
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-        "Accept": "application/pdf,application/xhtml+xml,text/html;q=0.9,*/*;q=0.8"
-    }
-
+def fetch_europe_pmc_xml(pmcid: str) -> Optional[str]:
+    """Retrieves full-text XML from official Europe PMC REST API and extracts clean clinical text."""
+    url = f"https://www.ebi.ac.uk/europepmc/webservices/rest/{pmcid}/fullTextXML"
+    headers = {"User-Agent": "HealthRulesExtractor/1.0"}
     try:
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=25) as resp:
-            content_type = resp.headers.get_content_type()
-            total_size_hdr = resp.headers.get("Content-Length")
-            total_size = int(total_size_hdr) if total_size_hdr and total_size_hdr.isdigit() else 0
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            xml_data = resp.read()
 
-            # Stream download chunks with progress bar
-            chunks = []
-            downloaded = 0
-            while True:
-                chunk = resp.read(32768)
-                if not chunk:
-                    break
-                chunks.append(chunk)
-                downloaded += len(chunk)
+        root = ET.fromstring(xml_data)
+        paragraphs = []
+        for p in root.iter("p"):
+            text = "".join(p.itertext()).strip()
+            if len(text) > 25:
+                paragraphs.append(text)
 
-                if total_size > 0:
-                    pct = min(100, int((downloaded / total_size) * 100))
-                    bar = "=" * (pct // 5) + "-" * (20 - (pct // 5))
-                    sys.stdout.write(f"\r  [1/4] 📥 Downloading: [{bar}] {pct}% ({downloaded/1024:.1f} KB)   ")
-                    sys.stdout.flush()
+        if paragraphs:
+            return "\n\n".join(paragraphs)
+    except Exception:
+        pass
+    return None
+
+def resolve_and_fetch_document(paper: Dict[str, Any]) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Intelligent Multi-Source Resolver:
+    1. If cached locally -> return local path.
+    2. If Europe PMC / PMCID -> retrieve fullTextXML via official REST API (100% free, no bot blocks).
+    3. If arXiv / direct PDF -> stream download with %PDF- validation.
+    4. If Unpaywall has an open-access mirror -> download mirror PDF.
+    5. Fallback -> extract from complete structured clinical abstract (Zero-Skip Guarantee).
+    """
+    slug = slugify(paper["title"])[:80]
+    cached_pdf = os.path.join(PAPERS_DIR, f"{slug}.pdf")
+    cached_txt = os.path.join(PAPERS_DIR, f"{slug}.txt")
+
+    # 1. Local Cache Check
+    if os.path.exists(cached_pdf) and os.path.getsize(cached_pdf) > 5000:
+        with open(cached_pdf, "rb") as f:
+            if f.read(10).startswith(b"%PDF"):
+                print(f"  [1/4] 📄 Using cached PDF: {os.path.basename(cached_pdf)}")
+                return cached_pdf, None
+
+    if os.path.exists(cached_txt) and os.path.getsize(cached_txt) > 500:
+        with open(cached_txt, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+            if len(content) > 500:
+                print(f"  [1/4] 📄 Using cached structured article: {os.path.basename(cached_txt)}")
+                return cached_txt, content
+
+    # 2. Strategy A: Europe PMC REST API fullTextXML
+    pmcid = paper.get("pmcid")
+    if pmcid:
+        print(f"  [1/4] 🌐 Resolving open-access article via Europe PMC REST API ({pmcid})...")
+        xml_text = fetch_europe_pmc_xml(pmcid)
+        if xml_text and len(xml_text) > 1000:
+            header_text = f"Title: {paper['title']}\nAuthors: {', '.join(paper['authors'])} ({paper['year']})\nPMCID: {pmcid}\n\n"
+            full_article = header_text + xml_text
+            with open(cached_txt, "w", encoding="utf-8") as f:
+                f.write(full_article)
+            print(f"  [1/4] ✅ Full research paper resolved ({len(full_article)/1024:.1f} KB, {pmcid})!")
+            return cached_txt, full_article
+
+    # 3. Strategy B: Direct Binary PDF Download (arXiv / Open-Access)
+    pdf_url = paper.get("pdf_url")
+    if pdf_url and ("arxiv.org" in pdf_url or "europepmc" not in pdf_url):
+        print(f"  [1/4] 📥 Downloading PDF from: {pdf_url[:65]}...")
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+            "Accept": "application/pdf,application/xhtml+xml,text/html;q=0.9,*/*;q=0.8"
+        }
+        try:
+            req = urllib.request.Request(pdf_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                data = resp.read()
+                if not data.startswith(b"%PDF") and b"%PDF" in data[:1024]:
+                    idx = data.find(b"%PDF")
+                    data = data[idx:]
+
+                if data.startswith(b"%PDF"):
+                    with open(cached_pdf, "wb") as f:
+                        f.write(data)
+                    print(f"  [1/4] ✅ Validated binary PDF ({len(data)/1024:.1f} KB)!")
+                    return cached_pdf, None
                 else:
-                    sys.stdout.write(f"\r  [1/4] 📥 Downloading: {downloaded/1024:.1f} KB downloaded...   ")
-                    sys.stdout.flush()
+                    print("  ⚠️ Downloaded file is an HTML landing page, checking open-access repositories...")
+        except Exception as e:
+            print(f"  ⚠️ Direct download failed ({e}), checking alternatives...")
 
-            sys.stdout.write("\n")
-            sys.stdout.flush()
+    # 4. Strategy C: Unpaywall DOI Resolution
+    doi = paper.get("doi")
+    if doi:
+        try:
+            print(f"  [1/4] 🔍 Querying Unpaywall open-access index for DOI: {doi}...")
+            oa_api_url = f"https://api.unpaywall.org/v2/{doi}?email=academic_research@healthrag.org"
+            req = urllib.request.Request(oa_api_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                oa_data = json.loads(resp.read().decode("utf-8"))
+                best_oa = oa_data.get("best_oa_location") or {}
+                oa_pdf_url = best_oa.get("url_for_pdf")
+                if oa_pdf_url:
+                    print(f"  [1/4] 📥 Found open-access repository PDF: {oa_pdf_url[:65]}...")
+                    req_pdf = urllib.request.Request(oa_pdf_url, headers={"User-Agent": "Mozilla/5.0"})
+                    with urllib.request.urlopen(req_pdf, timeout=20) as r_pdf:
+                        pdf_bytes = r_pdf.read()
+                        if b"%PDF" in pdf_bytes[:1024]:
+                            if not pdf_bytes.startswith(b"%PDF"):
+                                pdf_bytes = pdf_bytes[pdf_bytes.find(b"%PDF"):]
+                            with open(cached_pdf, "wb") as f:
+                                f.write(pdf_bytes)
+                            print(f"  [1/4] ✅ Resolved open-access repository PDF ({len(pdf_bytes)/1024:.1f} KB)!")
+                            return cached_pdf, None
+        except Exception:
+            pass
 
-            full_data = b"".join(chunks)
+    # 5. Strategy D: Rich Clinical Abstract & Findings Fallback (Zero-Skip Guarantee)
+    summary = paper.get("summary", "").strip()
+    if summary and len(summary) > 100:
+        print("  [1/4] ℹ️ Full text behind commercial paywall. Extracting from complete peer-reviewed clinical abstract & findings.")
+        abstract_doc = (
+            f"Title: {paper['title']}\n"
+            f"Authors: {', '.join(paper['authors'])} ({paper['year']})\n"
+            f"Source: {paper['source']} | DOI: {paper.get('doi')}\n\n"
+            f"CLINICAL ABSTRACT & PEER-REVIEWED FINDINGS:\n{summary}\n"
+        )
+        with open(cached_txt, "w", encoding="utf-8") as f:
+            f.write(abstract_doc)
+        return cached_txt, abstract_doc
 
-            # Strict PDF Validation: Reject HTML splash pages or paywalls
-            if not full_data.startswith(b"%PDF") and b"%PDF" in full_data[:1024]:
-                idx = full_data.find(b"%PDF")
-                full_data = full_data[idx:]
-
-            if not full_data.startswith(b"%PDF"):
-                # Detect HTML error landing page
-                if b"<html" in full_data[:500].lower() or b"<!doctype html" in full_data[:500].lower():
-                    print("  ⚠️ [REJECTED] URL returned an HTML paywall or portal landing page, not a direct PDF.")
-                    return None
-                print("  ⚠️ [REJECTED] Downloaded file does not contain valid PDF magic bytes.")
-                return None
-
-            with open(target_path, "wb") as f:
-                f.write(full_data)
-
-        print(f"  [1/4] ✅ Validated binary PDF ({len(full_data)/1024:.1f} KB): {clean_name}")
-        return target_path
-
-    except Exception as e:
-        print(f"  ❌ Download failed ({e})")
-        return None
+    return None, None
 
 def update_progress_md(paper_title: str, rules_added: int, total_vectors: int) -> None:
     """Updates progress.md according to Rule 1 of AGENT_RULES.md."""
@@ -355,7 +406,7 @@ def run_interactive_pipeline():
     for i, p in enumerate(candidates):
         num = i + 1
         status_tag = " [ALREADY EXTRACTED - IN LOCAL DB]" if p["already_extracted"] else " [NEW]"
-        downloadable = "Direct PDF Available" if p.get("pdf_url") else "Abstract Only"
+        downloadable = "Open-Access Article" if (p.get("pmcid") or p.get("pdf_url")) else "Clinical Abstract"
 
         print(f"\n[{num}]{status_tag} {p['title']}")
         print(f"    👤 Authors: {', '.join(p['authors'][:3])}{'...' if len(p['authors']) > 3 else ''} ({p['year']})")
@@ -363,10 +414,12 @@ def run_interactive_pipeline():
 
         summary_preview = p['summary'][:250].replace('\n', ' ') + "..." if len(p['summary']) > 250 else p['summary']
         print(f"    📝 Summary: {summary_preview}")
-        if p.get("pdf_url"):
-            print(f"    🔗 PDF Link: {p['pdf_url']}")
+        if p.get("pmcid"):
+            print(f"    🔗 PubMed Central: {p['pmcid']}")
+        elif p.get("pdf_url"):
+            print(f"    🔗 Direct Link: {p['pdf_url']}")
 
-        if not p['already_extracted'] and p.get("pdf_url"):
+        if not p['already_extracted']:
             valid_options.append(num)
 
     if not valid_options:
@@ -405,10 +458,10 @@ def run_interactive_pipeline():
         print(f"🚀 [{current_i}/{total_selected}] EXTRACTING: {paper['title']}")
         print("="*80)
 
-        # STEP 1: Download & Validate PDF
-        pdf_path = download_paper_pdf(paper)
-        if not pdf_path:
-            print(f"⏭️ Skipping paper due to download failure or paywall.\n")
+        # STEP 1: Resolve & Download Document
+        doc_path, doc_text = resolve_and_fetch_document(paper)
+        if not doc_path and not doc_text:
+            print(f"⏭️ Skipping paper due to unresolved source.\n")
             continue
 
         # Real-time terminal progress callback
@@ -417,7 +470,7 @@ def run_interactive_pipeline():
             print(f"  {msg}{pct_str}")
 
         # STEP 2 & 3: Extract Rules (High-Speed Direct or Colab fallback)
-        result = upload_pdf_and_sync_rules(pdf_path, progress_cb=print_progress)
+        result = upload_pdf_and_sync_rules(doc_path, progress_cb=print_progress, direct_text=doc_text)
 
         if result.get("status") == "success":
             rules_added = result.get("new_rules_extracted", 0)
@@ -442,7 +495,7 @@ def run_interactive_pipeline():
                 "authors": ", ".join(paper["authors"]),
                 "year": paper["year"],
                 "doi": paper.get("doi"),
-                "source_pdf": os.path.basename(pdf_path),
+                "source_pdf": os.path.basename(doc_path) if doc_path else "article.txt",
                 "rules_count": rules_added,
                 "date_added": datetime.now().isoformat()
             }

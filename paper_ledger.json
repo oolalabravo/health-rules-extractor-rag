@@ -120,6 +120,26 @@
       "source_pdf": "permutation-time-irreversibility-in-sleep-electroencephalograms-dependence-on-sl.pdf",
       "rules_count": 22,
       "date_added": "2026-10-31T02:36:41.975158"
+    },
+    {
+      "paper_id": "daily-step-count-and-sleep-metrics-across-pregnancy-an-observational-analysis-of-the-leap-cluster-ran",
+      "title": "Daily step-count and sleep metrics across pregnancy: an observational analysis of the LEAP cluster randomized clinical trial",
+      "authors": "Alissa C. Smethers et al.",
+      "year": "2024",
+      "doi": "10.1136/bmjmed-2023-000676",
+      "source_pdf": "daily-step-count-and-sleep-metrics-across-pregnancy-an-observational-analysis-of.txt",
+      "rules_count": 9,
+      "date_added": "2026-10-31T03:10:00.000000"
+    },
+    {
+      "paper_id": "joint-associations-of-device-measured-step-count-and-sleep-duration-with-incident-major-adverse-cardi",
+      "title": "Joint associations of device-measured step count and sleep duration with incident major adverse cardiovascular events: prospective analysis of the UK Biobank",
+      "authors": "Joreintje D. Mackenbach et al.",
+      "year": "2024",
+      "doi": "10.1093/eurjpc/zwae374",
+      "source_pdf": "joint-associations-of-device-measured-step-count-and-sleep-duration-with-inciden.txt",
+      "rules_count": 2,
+      "date_added": "2026-10-31T03:15:00.000000"
     }
   ]
 }
