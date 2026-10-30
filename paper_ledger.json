@@ -140,6 +140,26 @@
       "source_pdf": "joint-associations-of-device-measured-step-count-and-sleep-duration-with-inciden.txt",
       "rules_count": 2,
       "date_added": "2026-10-31T03:15:00.000000"
+    },
+    {
+      "paper_id": "association-between-objectively-measured-walking-steps-and-sleep-in-community-dwelling-older-adults-",
+      "title": "Association between objectively measured walking steps and sleep in community-dwelling older adults: A prospective cohort study",
+      "authors": "Kimura N, Aso Y, Yabuuchi K, Matsubara E.",
+      "year": "2020",
+      "doi": "10.1371/journal.pone.0243910",
+      "source_pdf": "association-between-objectively-measured-walking-steps-and-sleep-in-community-dw.txt",
+      "rules_count": 4,
+      "date_added": "2026-10-31T03:22:35.982897"
+    },
+    {
+      "paper_id": "effects-of-one-night-of-sleep-deprivation-on-single-and-dual-task-gait",
+      "title": "Effects of one night of sleep deprivation on single- and dual-task gait",
+      "authors": "Seynaeve M, Render A, Fino P, de Beukelaar T.",
+      "year": "Recent",
+      "doi": null,
+      "source_pdf": "effects-of-one-night-of-sleep-deprivation-on-single-and-dual-task-gait.txt",
+      "rules_count": 6,
+      "date_added": "2026-10-31T03:22:45.046400"
     }
   ]
 }

@@ -27,7 +27,7 @@
 
 ## 📚 Ingested Literature & Vector Index State
 
-- **Current Vector Count**: 1,378 embedded causal rules.
+- **Current Vector Count**: 1388,378 embedded causal rules.
 - **Embedded Literature**:
   - *The association between sleep deprivation and arterial pressure variations: a systematic literature review.pdf* (38 rules)
   - *Fetal Sleep: A Cross-Species Review of Physiology, Measurement, and Classification* (4 rules)
@@ -43,6 +43,8 @@
   - *Joint associations of device-measured step count and sleep duration with incident major adverse cardiovascular events: prospective analysis of the UK Biobank* (2 rules)
 
 ---
+  - *Association between objectively measured walking steps and sleep in community-dwelling older adults: A prospective cohort study* (Ingested 2026-10-31 03:22, +4 rules, total: 1382)
+  - *Effects of one night of sleep deprivation on single- and dual-task gait* (Ingested 2026-10-31 03:22, +6 rules, total: 1388)
 
 ## 🕒 Recent Session Log (2026-10-31)
 1. **Gemini API & Hanging Fix**:
