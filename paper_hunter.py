@@ -262,6 +262,13 @@ def run_interactive_pipeline():
     print("🧬 AUTOMATED RESEARCH PAPER HUNTER & CLINICAL EXTRACTION PIPELINE")
     print("="*80)
 
+    # 1. Zero-Touch Colab Check / Auto-Wakeup
+    try:
+        from colab_automator import ensure_colab_ready
+        colab_endpoint = ensure_colab_ready()
+    except Exception as ce:
+        print(f"⚠️ Colab readiness notice: {ce}")
+
     idea = input("\n💡 Enter your health / lifestyle research idea: ").strip()
     if not idea:
         print("⚠️ No idea provided. Exiting.")

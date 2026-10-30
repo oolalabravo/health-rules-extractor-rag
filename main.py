@@ -7,13 +7,11 @@ from pydantic import BaseModel
 from langchain_ollama import OllamaEmbeddings
 from langchain_community.vectorstores import FAISS
 
-# Ensure UTF-8 output on Windows consoles
+# Windows UTF-8 output configuration
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-
-app = FastAPI(title="Persistent Local Health RAG API")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VECTOR_DB_PATH = os.path.join(BASE_DIR, "local_persistent_vector_store")
@@ -25,9 +23,16 @@ try:
 except ImportError:
     pass
 
-# Dynamic Colab API URL (from environment or default fallback)
-DEFAULT_COLAB_URL = "https://eb1d-34-186-15-238.ngrok-free.app/extract-rules"
-COLAB_API_URL = os.getenv("COLAB_API_URL", DEFAULT_COLAB_URL)
+# Import Colab Automator for zero-touch cell execution
+try:
+    from colab_automator import ensure_colab_ready, check_colab_health
+except ImportError:
+    ensure_colab_ready = None
+    check_colab_health = None
+
+COLAB_API_URL = os.getenv("COLAB_API_URL", "")
+
+app = FastAPI(title="Persistent Local Health RAG API")
 
 # Local Ollama embedding setup (runs completely on your laptop)
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
@@ -43,7 +48,15 @@ def upload_pdf_and_sync_rules(pdf_path: str, colab_url: Optional[str] = None) ->
         print(f"❌ {err}")
         return {"status": "error", "message": err, "rules_added": 0}
 
-    target_url = colab_url or os.getenv("COLAB_API_URL", COLAB_API_URL)
+    target_url = colab_url or os.getenv("COLAB_API_URL") or COLAB_API_URL
+    if check_colab_health and (not target_url or not check_colab_health(target_url)):
+        print("🔍 Colab endpoint is not active. Auto-discovering endpoint...")
+        if ensure_colab_ready:
+            try:
+                target_url = ensure_colab_ready()
+            except Exception as e:
+                print(f"⚠️ Auto-discovery notice: {e}")
+
     print(f"\n📤 Uploading '{os.path.basename(pdf_path)}' to Colab ({target_url})...")
 
     headers = {}

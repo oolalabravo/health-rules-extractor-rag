@@ -5,7 +5,7 @@
 ---
 
 ## 📌 Project Overview
-- **Repository**: [https://github.com/oolalabravo/health-rules-extractor-rag](https://github.com/oolalabravo/health-rules-extractor-rag) (Latest commit: `966d617`)
+- **Repository**: [https://github.com/oolalabravo/health-rules-extractor-rag](https://github.com/oolalabravo/health-rules-extractor-rag)
 - **Purpose**: Peer-reviewed Clinical Intelligence & Retrieval-Augmented Generation (RAG) system. Extracts causal biomedical relations from literature PDFs and synthesizes physiological risk reports for wearable sensor queries with verified scientific citations.
 - **Colab Pipeline**: [https://colab.research.google.com/drive/1lmXZjH49KE6-8EeNyUAFmHm2gQ8LzW6V](https://colab.research.google.com/drive/1lmXZjH49KE6-8EeNyUAFmHm2gQ8LzW6V)
 
@@ -17,10 +17,11 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **Synthesis API** | [`querry.py`](querry.py) | `http://127.0.0.1:8001` | 🟢 Active | FastAPI server with Gemini 3.5 Flash primary, multi-tier fallback, and 15s timeout. |
 | **Vector DB** | [`local_persistent_vector_store/`](local_persistent_vector_store/) | Local Disk (FAISS) | 🟢 Active | 38 embedded vectors indexed via local Ollama `nomic-embed-text` (768-dim). |
-| **Ingestion Engine**| [`main.py`](main.py) | Local CLI / Module | 🟢 Active | Uploads PDF to Colab extraction server, receives JSON rules, and cumulatively merges to FAISS. |
-| **Colab Extractor** | Colab Notebook `2ZZKWkd_MzVj` | FastAPI + ngrok (:8000) | 🟢 Accelerated | Updated via `colab-mcp` with smart bibliography filtering, 2.5k chunk size, async 4x semaphore parallelism, and Gemini fast-path. |
+| **Ingestion Engine**| [`main.py`](main.py) | Local CLI / Module | 🟢 Active | Uploads PDF to Colab extraction server, receives JSON rules, and cumulatively merges to FAISS. Auto-discovers Colab endpoint. |
+| **Colab Extractor** | Colab Notebook `2ZZKWkd_MzVj` | FastAPI + Cloudflare/Ngrok | 🟢 Live & Autonomous | Dual-tunnel (Cloudflare zero-auth + Ngrok), non-blocking daemon thread, `/health` route, 4x parallel async inference. |
+| **Colab Automator** | [`colab_automator.py`](colab_automator.py) | Local CLI / Module | 🟢 Active | Zero-touch MCP orchestrator: automatically triggers Cell 0, captures tunnel endpoint, syncs `.env`, and validates health. |
 | **Paper Hunter** | [`paper_hunter.py`](paper_hunter.py) | Local CLI | 🟢 Active | Automated academic search (arXiv + Europe PMC), fuzzy deduplication ledger, interactive CLI, and extraction trigger. |
-| **Paper Ledger** | [`paper_ledger.json`](paper_ledger.json) | Local Disk (JSON) | 🟢 Active | Normalized Jaccard + slug duplicate detector prevents duplicate paper extraction. |
+| **Paper Ledger** | [`paper_ledger.json`](paper_ledger.json) | Local Disk (JSON) | 🟢 Active | Normalized Jaccard + slug duplicate detector prevents duplicate paper extraction across sessions. |
 
 ---
 
@@ -60,7 +61,12 @@
    - Built `paper_hunter.py` with multi-engine search across arXiv API and Europe PMC API.
    - Built fuzzy title matching + token overlap + slug deduplication via `paper_ledger.json`.
    - Interactive CLI lets user input topic, choose count, select paper(s), download PDF, and trigger sync.
-   - All changes committed and pushed to `main` (`966d617`).
+7. **Autonomous Colab Execution & Zero-Touch URL Sync**:
+   - Re-architected Colab Cell 0 into non-blocking daemon server (`threading.Thread`) with `/health` endpoint.
+   - Implemented dual-tunnel engine: Ngrok (if token present) + Cloudflare zero-auth tunnel fallback (zero token required).
+   - Built [`colab_automator.py`](colab_automator.py) which uses stdio MCP to trigger Cell 0, parse the generated tunnel URL, and save it to `.env`.
+   - Integrated `ensure_colab_ready()` into [`main.py`](main.py) and [`paper_hunter.py`](paper_hunter.py).
+   - Verified live execution: Cell 0 triggered via MCP, generated live endpoint, and passed health check.
 
 ---
 
@@ -69,6 +75,6 @@
 - [x] Modularize `main.py` for headless invocation by `paper_hunter.py`.
 - [x] Build `paper_hunter.py` with multi-engine academic search, deduplication, and user interactive selection.
 - [x] Accelerate Colab Notebook Cell 0 via `colab-mcp` (async parallel chunks, smart bibliography filtering).
-- [x] Verify search, deduplication logic, and git synchronization.
-- [ ] Run Cell 0 in Colab to launch the optimized FastAPI server and obtain fresh ngrok URL.
-- [ ] Run `python paper_hunter.py` to ingest a new paper end-to-end.
+- [x] Implement non-blocking Colab Cell 0 with Cloudflare zero-auth tunnel and health checks.
+- [x] Implement `colab_automator.py` for autonomous cell trigger and `.env` URL synchronization.
+- [x] Test end-to-end autonomous Colab execution and paper discovery.
