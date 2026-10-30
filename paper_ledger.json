@@ -10,6 +10,116 @@
       "source_pdf": "The association between sleep deprivation and arterial pressure variations_ a systematic literature review.pdf",
       "rules_count": 38,
       "date_added": "2026-10-07T14:49:00"
+    },
+    {
+      "paper_id": "fetal-sleep-a-cross-species-review-of-physiology-measurement-and-classification",
+      "title": "Fetal Sleep: A Cross-Species Review of Physiology, Measurement, and Classification",
+      "authors": "Weitao Tang, Johann Vargas-Calixto, Nasim Katebi, Robert Galinsky, Gari D. Clifford, Faezeh Marzbanrad",
+      "year": "2025",
+      "doi": null,
+      "source_pdf": "fetal-sleep-a-cross-species-review-of-physiology-measurement-and-classification.pdf",
+      "rules_count": 4,
+      "date_added": "2026-10-31T02:17:54.689244"
+    },
+    {
+      "paper_id": "the-dark-energy-survey",
+      "title": "The Dark Energy Survey",
+      "authors": " The Dark Energy Survey Collaboration",
+      "year": "2005",
+      "doi": null,
+      "source_pdf": "the-dark-energy-survey.pdf",
+      "rules_count": 0,
+      "date_added": "2026-10-31T02:20:31.733279"
+    },
+    {
+      "paper_id": "sleep-staging-from-electrocardiography-and-respiration-with-deep-learning",
+      "title": "Sleep Staging from Electrocardiography and Respiration with Deep Learning",
+      "authors": "Haoqi Sun, Wolfgang Ganglberger, Ezhil Panneerselvam, Michael J. Leone, Syed A. Quadri, Balaji Goparaju, Ryan A. Tesh, Oluwaseun Akeju, Robert J. Thomas, M. Brandon Westover",
+      "year": "2019",
+      "doi": null,
+      "source_pdf": "sleep-staging-from-electrocardiography-and-respiration-with-deep-learning.pdf",
+      "rules_count": 4,
+      "date_added": "2026-10-31T02:20:54.192074"
+    },
+    {
+      "paper_id": "a-large-collection-of-real-world-pediatric-sleep-studies",
+      "title": "A Large Collection of Real-world Pediatric Sleep Studies",
+      "authors": "Harlin Lee, Boyue Li, Shelly DeForte, Mark Splaingard, Yungui Huang, Yuejie Chi, Simon Lin Linwood",
+      "year": "2021",
+      "doi": null,
+      "source_pdf": "a-large-collection-of-real-world-pediatric-sleep-studies.pdf",
+      "rules_count": 2,
+      "date_added": "2026-10-31T02:21:14.068784"
+    },
+    {
+      "paper_id": "sleep-and-its-relation-to-cognition-and-behaviour-in-preschool-aged-children-of-the-general-populati",
+      "title": "Sleep and its relation to cognition and behaviour in preschool-aged children of the general population: a systematic review",
+      "authors": "Eve Reynaud, Marie-Françoise Vecchierini, Barbara Heude, Marie-Aline Charles, Sabine Plancoulaine",
+      "year": "2019",
+      "doi": null,
+      "source_pdf": "sleep-and-its-relation-to-cognition-and-behaviour-in-preschool-aged-children-of-.pdf",
+      "rules_count": 6,
+      "date_added": "2026-10-31T02:23:53.622595"
+    },
+    {
+      "paper_id": "dynamic-gnodeb-sleep-control-for-energy-conserving-5g-radio-access-network",
+      "title": "Dynamic gNodeB Sleep Control for Energy-Conserving 5G Radio Access Network",
+      "authors": "Pengfei Shen, Yulin Shao, Qi Cao, Lu Lu",
+      "year": "2022",
+      "doi": null,
+      "source_pdf": "dynamic-gnodeb-sleep-control-for-energy-conserving-5g-radio-access-network.pdf",
+      "rules_count": 11,
+      "date_added": "2026-10-31T02:29:13.385511"
+    },
+    {
+      "paper_id": "quantified-sleep-machine-learning-techniques-for-observational-n-of-1-studies",
+      "title": "Quantified Sleep: Machine learning techniques for observational n-of-1 studies",
+      "authors": "Gianluca Truda",
+      "year": "2021",
+      "doi": null,
+      "source_pdf": "quantified-sleep-machine-learning-techniques-for-observational-n-of-1-studies.pdf",
+      "rules_count": 3,
+      "date_added": "2026-10-31T02:30:37.444897"
+    },
+    {
+      "paper_id": "quantum-anti-zeno-treatment-of-zeno-type-sleep-disorders",
+      "title": "Quantum Anti-Zeno Treatment of Zeno-type Sleep Disorders",
+      "authors": "Rajat Kumar Pradhan",
+      "year": "2011",
+      "doi": null,
+      "source_pdf": "quantum-anti-zeno-treatment-of-zeno-type-sleep-disorders.pdf",
+      "rules_count": 3,
+      "date_added": "2026-10-31T02:31:32.529189"
+    },
+    {
+      "paper_id": "dark-energy-and-cosmic-sound-wz-surveys-with-the-geminisubaru-wide-field-multi-object-spectrograph",
+      "title": "Dark Energy and Cosmic Sound: w(z) Surveys with the Gemini/Subaru Wide-Field Multi-Object Spectrograph",
+      "authors": "Karl Glazebrook, Daniel Eisenstein, Arjun Dey, Bob Nichol, The WFMOS Feasibility Study Dark Energy Team",
+      "year": "2005",
+      "doi": null,
+      "source_pdf": "dark-energy-and-cosmic-sound-wz-surveys-with-the-geminisubaru-wide-field-multi-o.pdf",
+      "rules_count": 0,
+      "date_added": "2026-10-31T02:32:31.721018"
+    },
+    {
+      "paper_id": "evaluation-of-the-lep-centre-of-mass-energy-above-the-w-pair-production-threshold",
+      "title": "Evaluation of the LEP Centre-of-Mass Energy Above the W-Pair Production Threshold",
+      "authors": " The LEP Energy Working Group",
+      "year": "1999",
+      "doi": null,
+      "source_pdf": "evaluation-of-the-lep-centre-of-mass-energy-above-the-w-pair-production-threshol.pdf",
+      "rules_count": 16,
+      "date_added": "2026-10-31T02:34:30.247973"
+    },
+    {
+      "paper_id": "permutation-time-irreversibility-in-sleep-electroencephalograms-dependence-on-sleep-stage-and-the-ef",
+      "title": "Permutation time irreversibility in sleep electroencephalograms: Dependence on sleep stage and the effect of equal values",
+      "authors": "Wenpo Yao",
+      "year": "2024",
+      "doi": null,
+      "source_pdf": "permutation-time-irreversibility-in-sleep-electroencephalograms-dependence-on-sl.pdf",
+      "rules_count": 22,
+      "date_added": "2026-10-31T02:36:41.975158"
     }
   ]
 }
