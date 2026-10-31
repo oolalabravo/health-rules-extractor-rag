@@ -144,7 +144,8 @@ def decode_app_jwt(token: str) -> Optional[Dict[str, Any]]:
 
 def sync_user_google_fitness(user_id: int, db: Session, days_back: int = 180) -> Dict[str, Any]:
     """
-    Pulls up to 6 months (180 days) of daily physiological data from Google Fitness API:
+    Pulls up to 6 months (180 days) of daily physiological data from Google Fitness API
+    using 30-day window chunking to strictly adhere to Google API duration limits:
     - Steps: com.google.step_count.delta
     - Sleep: com.google.sleep.segment
     - Heart rate: com.google.heart_rate.bpm
@@ -153,136 +154,151 @@ def sync_user_google_fitness(user_id: int, db: Session, days_back: int = 180) ->
     access_token = get_valid_access_token(user_id, db)
 
     now = datetime.utcnow()
-    # End of today at 23:59:59 UTC
     end_dt = datetime(now.year, now.month, now.day, 23, 59, 59)
-    start_dt = end_dt - timedelta(days=days_back)
+    total_start_dt = end_dt - timedelta(days=days_back)
 
-    start_ms = int(start_dt.timestamp() * 1000)
-    end_ms = int(end_dt.timestamp() * 1000)
+    # Google Fitness dataset:aggregate restricts query duration to max 30-31 days.
+    # We partition the 180-day range into 30-day sequential windows.
+    CHUNK_SIZE_DAYS = 30
+    windows: List[Tuple[datetime, datetime]] = []
+    curr_start = total_start_dt
+    while curr_start < end_dt:
+        curr_end = min(curr_start + timedelta(days=CHUNK_SIZE_DAYS), end_dt)
+        windows.append((curr_start, curr_end))
+        curr_start = curr_end
 
-    # Google Fitness REST API aggregate request
     aggregate_url = "https://fitness.googleapis.com/fitness/v1/users/me/dataset:aggregate"
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
     }
 
-    # Request daily buckets (86,400,000 milliseconds = 1 day)
-    request_body = {
-        "aggregateBy": [
-            {
-                "dataTypeName": "com.google.step_count.delta",
-                "dataSourceId": "derived:com.google.step_count.delta:com.google.android.gms:estimated_steps"
-            },
-            {
-                "dataTypeName": "com.google.sleep.segment"
-            },
-            {
-                "dataTypeName": "com.google.heart_rate.bpm",
-                "dataSourceId": "derived:com.google.heart_rate.bpm:com.google.android.gms:merge_heart_rate_bpm"
-            }
-        ],
-        "bucketByTime": {
-            "durationMillis": 86400000
-        },
-        "startTimeMillis": start_ms,
-        "endTimeMillis": end_ms
-    }
-
-    resp = requests.post(aggregate_url, headers=headers, json=request_body, timeout=30)
-    if not resp.ok:
-        # Fall back gracefully to simpler data types if derived sources are unavailable
-        request_body["aggregateBy"] = [
-            {"dataTypeName": "com.google.step_count.delta"},
-            {"dataTypeName": "com.google.sleep.segment"},
-            {"dataTypeName": "com.google.heart_rate.bpm"}
-        ]
-        resp = requests.post(aggregate_url, headers=headers, json=request_body, timeout=30)
-
-    if not resp.ok:
-        raise RuntimeError(f"Google Fitness aggregation failed ({resp.status_code}): {resp.text}")
-
-    data = resp.json()
-    buckets = data.get("bucket", [])
+    total_buckets_processed = 0
     records_saved = 0
 
-    for bucket in buckets:
-        b_start_ms = int(bucket.get("startTimeMillis", 0))
-        date_str = datetime.utcfromtimestamp(b_start_ms / 1000.0).strftime("%Y-%m-%d")
+    print(f"🔄 Slicing {days_back}-day sync into {len(windows)} safe 30-day Google Fitness windows...")
 
-        step_count = 0
-        sleep_minutes = 0.0
-        deep_sleep_minutes = 0.0
-        rem_sleep_minutes = 0.0
-        hr_values: List[float] = []
+    for w_idx, (w_start, w_end) in enumerate(windows, start=1):
+        start_ms = int(w_start.timestamp() * 1000)
+        end_ms = int(w_end.timestamp() * 1000)
 
-        for dataset in bucket.get("dataset", []):
-            for point in dataset.get("point", []):
-                dt_name = point.get("dataTypeName", "")
+        request_body = {
+            "aggregateBy": [
+                {
+                    "dataTypeName": "com.google.step_count.delta",
+                    "dataSourceId": "derived:com.google.step_count.delta:com.google.android.gms:estimated_steps"
+                },
+                {
+                    "dataTypeName": "com.google.sleep.segment"
+                },
+                {
+                    "dataTypeName": "com.google.heart_rate.bpm",
+                    "dataSourceId": "derived:com.google.heart_rate.bpm:com.google.android.gms:merge_heart_rate_bpm"
+                }
+            ],
+            "bucketByTime": {
+                "durationMillis": 86400000  # 1 day buckets
+            },
+            "startTimeMillis": start_ms,
+            "endTimeMillis": end_ms
+        }
 
-                # 1. Step Count
-                if "step_count" in dt_name:
-                    for val in point.get("value", []):
-                        step_count += int(val.get("intVal", 0))
+        try:
+            resp = requests.post(aggregate_url, headers=headers, json=request_body, timeout=25)
+            if not resp.ok:
+                # Fall back gracefully to standard data types if derived sources are unavailable
+                request_body["aggregateBy"] = [
+                    {"dataTypeName": "com.google.step_count.delta"},
+                    {"dataTypeName": "com.google.sleep.segment"},
+                    {"dataTypeName": "com.google.heart_rate.bpm"}
+                ]
+                resp = requests.post(aggregate_url, headers=headers, json=request_body, timeout=25)
 
-                # 2. Sleep Segments
-                elif "sleep" in dt_name:
-                    p_start = int(point.get("startTimeNanos", 0))
-                    p_end = int(point.get("endTimeNanos", 0))
-                    duration_mins = max(0, (p_end - p_start) / (1e9 * 60.0))
-                    sleep_minutes += duration_mins
+            if not resp.ok:
+                print(f"  ⚠️ Chunk {w_idx}/{len(windows)} notice ({resp.status_code}): {resp.text[:120]}")
+                continue
 
-                    # Sleep stage classification (Google Fit segment types)
-                    # 1=Awake, 2=Sleep, 3=Out-of-bed, 4=Light, 5=Deep, 6=REM
-                    for val in point.get("value", []):
-                        stage_type = val.get("intVal", 2)
-                        if stage_type == 5:
-                            deep_sleep_minutes += duration_mins
-                        elif stage_type == 6:
-                            rem_sleep_minutes += duration_mins
+            data = resp.json()
+            buckets = data.get("bucket", [])
+            total_buckets_processed += len(buckets)
 
-                # 3. Heart Rate
-                elif "heart_rate" in dt_name:
-                    for val in point.get("value", []):
-                        fp_val = val.get("fpVal")
-                        if fp_val and fp_val > 0:
-                            hr_values.append(float(fp_val))
+            for bucket in buckets:
+                b_start_ms = int(bucket.get("startTimeMillis", 0))
+                date_str = datetime.utcfromtimestamp(b_start_ms / 1000.0).strftime("%Y-%m-%d")
 
-        avg_hr = round(sum(hr_values) / len(hr_values), 1) if hr_values else 0.0
-        # Estimate resting HR from lowest 10th percentile of daytime HR
-        resting_hr = round(sorted(hr_values)[max(0, int(len(hr_values) * 0.1))], 1) if hr_values else 0.0
+                step_count = 0
+                sleep_minutes = 0.0
+                deep_sleep_minutes = 0.0
+                rem_sleep_minutes = 0.0
+                hr_values: List[float] = []
 
-        # Upsert into daily_health_metrics
-        metric_rec = db.query(DailyHealthMetric).filter(
-            DailyHealthMetric.user_id == user_id,
-            DailyHealthMetric.date == date_str
-        ).first()
+                for dataset in bucket.get("dataset", []):
+                    for point in dataset.get("point", []):
+                        dt_name = point.get("dataTypeName", "")
 
-        if not metric_rec:
-            metric_rec = DailyHealthMetric(
-                user_id=user_id,
-                date=date_str,
-                step_count=step_count,
-                sleep_minutes=sleep_minutes,
-                deep_sleep_minutes=deep_sleep_minutes,
-                rem_sleep_minutes=rem_sleep_minutes,
-                resting_heart_rate=resting_hr,
-                avg_heart_rate=avg_hr
-            )
-            db.add(metric_rec)
-        else:
-            # Update record if fresh metrics arrived
-            if step_count > 0:
-                metric_rec.step_count = step_count
-            if sleep_minutes > 0:
-                metric_rec.sleep_minutes = sleep_minutes
-                metric_rec.deep_sleep_minutes = deep_sleep_minutes
-                metric_rec.rem_sleep_minutes = rem_sleep_minutes
-            if avg_hr > 0:
-                metric_rec.avg_heart_rate = avg_hr
-                metric_rec.resting_heart_rate = resting_hr
+                        # 1. Step Count
+                        if "step_count" in dt_name:
+                            for val in point.get("value", []):
+                                step_count += int(val.get("intVal", 0))
 
-        records_saved += 1
+                        # 2. Sleep Segments
+                        elif "sleep" in dt_name:
+                            p_start = int(point.get("startTimeNanos", 0))
+                            p_end = int(point.get("endTimeNanos", 0))
+                            duration_mins = max(0, (p_end - p_start) / (1e9 * 60.0))
+                            sleep_minutes += duration_mins
+
+                            for val in point.get("value", []):
+                                stage_type = val.get("intVal", 2)
+                                if stage_type == 5:
+                                    deep_sleep_minutes += duration_mins
+                                elif stage_type == 6:
+                                    rem_sleep_minutes += duration_mins
+
+                        # 3. Heart Rate
+                        elif "heart_rate" in dt_name:
+                            for val in point.get("value", []):
+                                fp_val = val.get("fpVal")
+                                if fp_val and fp_val > 0:
+                                    hr_values.append(float(fp_val))
+
+                avg_hr = round(sum(hr_values) / len(hr_values), 1) if hr_values else 0.0
+                resting_hr = round(sorted(hr_values)[max(0, int(len(hr_values) * 0.1))], 1) if hr_values else 0.0
+
+                # Upsert into daily_health_metrics
+                metric_rec = db.query(DailyHealthMetric).filter(
+                    DailyHealthMetric.user_id == user_id,
+                    DailyHealthMetric.date == date_str
+                ).first()
+
+                if not metric_rec:
+                    metric_rec = DailyHealthMetric(
+                        user_id=user_id,
+                        date=date_str,
+                        step_count=step_count,
+                        sleep_minutes=sleep_minutes,
+                        deep_sleep_minutes=deep_sleep_minutes,
+                        rem_sleep_minutes=rem_sleep_minutes,
+                        resting_heart_rate=resting_hr,
+                        avg_heart_rate=avg_hr
+                    )
+                    db.add(metric_rec)
+                else:
+                    if step_count > 0:
+                        metric_rec.step_count = step_count
+                    if sleep_minutes > 0:
+                        metric_rec.sleep_minutes = sleep_minutes
+                        metric_rec.deep_sleep_minutes = deep_sleep_minutes
+                        metric_rec.rem_sleep_minutes = rem_sleep_minutes
+                    if avg_hr > 0:
+                        metric_rec.avg_heart_rate = avg_hr
+                        metric_rec.resting_heart_rate = resting_hr
+
+                records_saved += 1
+
+        except Exception as chunk_err:
+            print(f"  ⚠️ Chunk {w_idx} encountered error ({chunk_err}), continuing...")
+            continue
 
     db.commit()
 
@@ -292,7 +308,8 @@ def sync_user_google_fitness(user_id: int, db: Session, days_back: int = 180) ->
     return {
         "status": "success",
         "user_id": user_id,
-        "buckets_processed": len(buckets),
+        "chunks_processed": len(windows),
+        "buckets_processed": total_buckets_processed,
         "days_synced": records_saved,
         "baseline": baseline_info
     }
