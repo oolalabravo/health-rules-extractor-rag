@@ -106,16 +106,22 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
 # ==============================================================================
 
 @app.get("/api/auth/google/url")
-def get_google_auth_url(redirect_uri: Optional[str] = None):
+def get_google_auth_url(request: Request, redirect_uri: Optional[str] = None):
     """Returns the Google OAuth 2.0 authorization URL for client redirection."""
-    auth_url = build_google_auth_url(redirect_uri=redirect_uri)
-    return {"status": "success", "auth_url": auth_url}
+    target_redirect = redirect_uri
+    if not target_redirect:
+        base_url = str(request.base_url).rstrip('/')
+        target_redirect = f"{base_url}/api/auth/google/callback"
+    auth_url = build_google_auth_url(redirect_uri=target_redirect)
+    return {"status": "success", "auth_url": auth_url, "redirect_uri": target_redirect}
 
 @app.get("/api/auth/google/callback")
-def google_auth_callback_get(code: str, db: Session = Depends(get_db)):
+def google_auth_callback_get(code: str, request: Request, db: Session = Depends(get_db)):
     """Handles OAuth redirect from Google, registers/authenticates user, and redirects to Angular."""
     try:
-        tokens = exchange_code_for_tokens(code)
+        # Dynamically match the exact callback URI that received the redirect
+        callback_uri = str(request.url).split('?')[0]
+        tokens = exchange_code_for_tokens(code, redirect_uri=callback_uri)
         access_token = tokens["access_token"]
         refresh_token = tokens.get("refresh_token")
         expires_in = tokens.get("expires_in", 3600)
@@ -183,10 +189,11 @@ class CodeExchangePayload(BaseModel):
     redirect_uri: Optional[str] = None
 
 @app.post("/api/auth/google/token")
-def exchange_code_post(payload: CodeExchangePayload, db: Session = Depends(get_db)):
+def exchange_code_post(payload: CodeExchangePayload, request: Request, db: Session = Depends(get_db)):
     """Exchanges code for JWT via direct JSON POST from Single-Page Apps."""
     try:
-        tokens = exchange_code_for_tokens(payload.code, redirect_uri=payload.redirect_uri)
+        target_redirect = payload.redirect_uri or f"{str(request.base_url).rstrip('/')}/api/auth/google/callback"
+        tokens = exchange_code_for_tokens(payload.code, redirect_uri=target_redirect)
         access_token = tokens["access_token"]
         refresh_token = tokens.get("refresh_token")
         expires_in = tokens.get("expires_in", 3600)
