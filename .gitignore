@@ -8,6 +8,12 @@ __pycache__/
 .env
 .env.local
 *.env
+client_secret*.json
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
 
 # Virtual environments
 venv/
@@ -27,3 +33,11 @@ ENV/
 
 # Downloaded literature papers (large binary PDFs)
 RESEARCH PAPERS/
+
+# Node & Angular Frontend
+frontend/node_modules/
+frontend/.angular/
+frontend/dist/
+node_modules/
+.angular/
+dist/
