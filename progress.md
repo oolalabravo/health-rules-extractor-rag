@@ -48,7 +48,8 @@
 ## 🕒 Recent Session Log (2026-11-01)
 1. **Google Health & Google Fitness OAuth 2.0 Integration**:
    - Integrated client ID `1059027165335-m2h68ikq9uremd83bk07bvmkprmn3ede.apps.googleusercontent.com` and credentials in `.env`.
-   - Built [`google_health_service.py`](google_health_service.py) with OAuth2 authorization code exchange, automatic token refresh, and Google Fitness REST API aggregate ingestion (`com.google.step_count.delta`, `com.google.sleep.segment`, `com.google.heart_rate.bpm`).
+   - Built [`google_health_service.py`](google_health_service.py) with OAuth2 authorization code exchange, dynamic redirect URI matching, automatic token refresh, and Google Fitness REST API aggregate ingestion (`com.google.step_count.delta`, `com.google.sleep.segment`, `com.google.heart_rate.bpm`).
+   - Sliced 180-day historical data synchronization into **6 safe 30-day sequential rolling windows** to eliminate Google's `400 Bad Request: "aggregate duration too large"` restriction.
 2. **15-Day Physiological Baselining Engine**:
    - Engineered baseline engine calculating personal normal distributions ($\mu \pm 1.5\sigma$) for daily sleep, resting HR, and step volume.
    - **Baseline Ready (>= 15 days)**: Compares acute biometrics against established personal baseline for high-confidence clinical risk deduction.
