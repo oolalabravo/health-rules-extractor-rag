@@ -160,6 +160,96 @@
       "source_pdf": "effects-of-one-night-of-sleep-deprivation-on-single-and-dual-task-gait.txt",
       "rules_count": 6,
       "date_added": "2026-10-31T03:22:45.046400"
+    },
+    {
+      "paper_id": "shesop-healthcare-android-application-to-monitor-heart-rate-variance-display-influenza-and-stress-co",
+      "title": "Shesop Healthcare: Android application to monitor heart rate variance, display influenza and stress condition using Polar H7",
+      "authors": "Andrien Ivander Wijaya, Ary Setijadi Prihatmanto, Rifki Wijaya",
+      "year": "2016",
+      "doi": "10.13140/RG.2.1.1400.4729",
+      "source_pdf": "shesop-healthcare-android-application-to-monitor-heart-rate-variance-display-inf.pdf",
+      "rules_count": 0,
+      "date_added": "2026-10-31T19:45:43.765421"
+    },
+    {
+      "paper_id": "shesop-healthcare-android-application-to-monitor-heart-rate-variance-display-influenza-and-stress-co",
+      "title": "Shesop Healthcare: Android application to monitor heart rate variance, display influenza and stress condition using Polar H7",
+      "authors": "Andrien Ivander Wijaya, Ary Setijadi Prihatmanto, Rifki Wijaya",
+      "year": "2016",
+      "doi": "10.13140/RG.2.1.1400.4729",
+      "source_pdf": "shesop-healthcare-android-application-to-monitor-heart-rate-variance-display-inf.pdf",
+      "rules_count": 0,
+      "date_added": "2026-10-31T19:45:47.136155"
+    },
+    {
+      "paper_id": "frequency-structure-of-heart-rate-variability",
+      "title": "Frequency Structure of Heart Rate Variability",
+      "authors": "V. Mukhin",
+      "year": "2010",
+      "doi": null,
+      "source_pdf": "frequency-structure-of-heart-rate-variability.pdf",
+      "rules_count": 1,
+      "date_added": "2026-10-31T19:45:48.347477"
+    },
+    {
+      "paper_id": "vitallens-20-high-fidelity-rppg-for-heart-rate-variability-estimation-from-face-video",
+      "title": "VitalLens 2.0: High-Fidelity rPPG for Heart Rate Variability Estimation from Face Video",
+      "authors": "Philipp V. Rouast",
+      "year": "2025",
+      "doi": null,
+      "source_pdf": "vitallens-20-high-fidelity-rppg-for-heart-rate-variability-estimation-from-face-.pdf",
+      "rules_count": 2,
+      "date_added": "2026-10-31T19:45:58.001198"
+    },
+    {
+      "paper_id": "measuring-long-term-physical-activity-in-patients-with-heart-failure-and-its-relation-to-health-rela",
+      "title": "Measuring long-term physical activity in patients with heart failure and its relation to health-related outcomes",
+      "authors": "Unknown Authors",
+      "year": "2026",
+      "doi": null,
+      "source_pdf": "measuring-long-term-physical-activity-in-patients-with-heart-failure-and-its-rel.txt",
+      "rules_count": 7,
+      "date_added": "2026-10-31T19:46:00.768366"
+    },
+    {
+      "paper_id": "real-world-health-monitoring-using-wrist-worn-wearables-in-community-dwelling-older-adults-in-china-",
+      "title": "Real-World Health Monitoring Using Wrist-Worn Wearables in Community-Dwelling Older Adults in China: Mixed Methods Feasibility Study",
+      "authors": "Bai Y, Tang Y, Zhao Y, Ma L, Ma Y",
+      "year": "2026",
+      "doi": "10.2196/98592",
+      "source_pdf": "real-world-health-monitoring-using-wrist-worn-wearables-in-community-dwelling-ol.txt",
+      "rules_count": 4,
+      "date_added": "2026-10-31T19:46:02.202224"
+    },
+    {
+      "paper_id": "estimating-heart-failure-health-status-from-multimodal-wearables-implementation-of-a-feature-enginee",
+      "title": "Estimating Heart Failure Health Status From Multimodal Wearables: Implementation of a Feature-Engineering Framework for KCCQ-12 Prediction",
+      "authors": "McLeod CJ, Bruce C, Rajput KS, Ross JS, Lou Velarde SJ",
+      "year": "2026",
+      "doi": "10.1016/j.mcpdig.2026.100403",
+      "source_pdf": "estimating-heart-failure-health-status-from-multimodal-wearables-implementation-.txt",
+      "rules_count": 4,
+      "date_added": "2026-10-31T19:46:03.003137"
+    },
+    {
+      "paper_id": "a-web-based-pedometer-mediated-intervention-increases-amount-and-intensity-of-physical-activity-in-c",
+      "title": "A Web-Based, Pedometer-Mediated Intervention Increases Amount and Intensity of Physical Activity in COPD: A Randomized Controlled Trial",
+      "authors": "Bamonti PM, Desiato JT, Kadri R, Gagnon DR, Moy ML.",
+      "year": "2026",
+      "doi": "10.2147/copd.s611540",
+      "source_pdf": "a-web-based-pedometer-mediated-intervention-increases-amount-and-intensity-of-ph.txt",
+      "rules_count": 3,
+      "date_added": "2026-10-31T19:48:54.654210"
+    },
+    {
+      "paper_id": "feasibility-and-clinical-outcomes-of-a-6-month-home-based-telerehabilitation-program-in-patients-wit",
+      "title": "Feasibility and Clinical Outcomes of a 6-Month Home-Based Telerehabilitation Program in Patients with Peripheral Arterial Disease: A Prospective Single-Arm Study",
+      "authors": "Rotundu A, Roca M, Maștaleru A, Oancea A, Popescu G",
+      "year": "2026",
+      "doi": "10.3390/life16101611",
+      "source_pdf": "feasibility-and-clinical-outcomes-of-a-6-month-home-based-telerehabilitation-pro.txt",
+      "rules_count": 6,
+      "date_added": "2026-10-31T19:48:56.523251"
     }
   ]
 }

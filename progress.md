@@ -29,7 +29,7 @@
 
 ## 📚 Ingested Literature & Vector Index State
 
-- **Current Vector Count**: 1,378 embedded causal rules.
+- **Current Vector Count**: 1401,378 embedded causal rules.
 - **Embedded Literature**:
   - *The association between sleep deprivation and arterial pressure variations: a systematic literature review.pdf* (38 rules)
   - *Fetal Sleep: A Cross-Species Review of Physiology, Measurement, and Classification* (4 rules)
@@ -45,6 +45,15 @@
   - *Joint associations of device-measured step count and sleep duration with incident major adverse cardiovascular events: prospective analysis of the UK Biobank* (2 rules)
 
 ---
+  - *Shesop Healthcare: Android application to monitor heart rate variance, display influenza and stress condition using Polar H7* (Ingested 2026-11-01 01:15, +0 rules, total: 0)
+  - *Shesop Healthcare: Android application to monitor heart rate variance, display influenza and stress condition using Polar H7* (Ingested 2026-11-01 01:15, +0 rules, total: 0)
+  - *Frequency Structure of Heart Rate Variability* (Ingested 2026-11-01 01:15, +1 rules, total: 1389)
+  - *VitalLens 2.0: High-Fidelity rPPG for Heart Rate Variability Estimation from Face Video* (Ingested 2026-11-01 01:15, +2 rules, total: 1391)
+  - *Measuring long-term physical activity in patients with heart failure and its relation to health-related outcomes* (Ingested 2026-11-01 01:16, +7 rules, total: 1398)
+  - *Real-World Health Monitoring Using Wrist-Worn Wearables in Community-Dwelling Older Adults in China: Mixed Methods Feasibility Study* (Ingested 2026-11-01 01:16, +4 rules, total: 1402)
+  - *Estimating Heart Failure Health Status From Multimodal Wearables: Implementation of a Feature-Engineering Framework for KCCQ-12 Prediction* (Ingested 2026-11-01 01:16, +4 rules, total: 1395)
+  - *A Web-Based, Pedometer-Mediated Intervention Increases Amount and Intensity of Physical Activity in COPD: A Randomized Controlled Trial* (Ingested 2026-11-01 01:18, +3 rules, total: 1398)
+  - *Feasibility and Clinical Outcomes of a 6-Month Home-Based Telerehabilitation Program in Patients with Peripheral Arterial Disease: A Prospective Single-Arm Study* (Ingested 2026-11-01 01:18, +6 rules, total: 1401)
 
 ## 🕒 Recent Session Log (2026-11-01)
 1. **Google Health & Google Fitness OAuth 2.0 Integration**:
