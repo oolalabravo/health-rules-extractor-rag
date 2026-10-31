@@ -21,6 +21,7 @@
 | **Vector DB** | [`local_persistent_vector_store/`](local_persistent_vector_store/) | Local Disk (FAISS) | 🟢 Active | 1,378 embedded vectors indexed via local Ollama `nomic-embed-text` (768-dim) with offline ledger fallback. |
 | **Ingestion Engine**| [`main.py`](main.py) | Local CLI / Module | 🟢 Blazing Fast (3-8s) | Direct Gemini Flash-Lite fast path (`gemini-3.5-flash-lite`), handles both PDFs and XML text transcripts, sanitized Colab fallback. |
 | **Angular Frontend** | [`frontend/`](frontend/) | `http://localhost:4200` | 🟢 Built & Ready | Angular 18 standalone app: Google Sign-In, 15-day baseline tracker, wearable timeline, and Admin Paper Hunter Studio GUI. |
+| **System Launcher** | [`start.cmd`](start.cmd) | Windows Batch | 🟢 Live Hot-Reload | One-click launcher that starts both FastAPI (`--reload`) and Angular (`live-reload`) in separate windows and opens browser. |
 | **Paper Hunter** | [`paper_hunter.py`](paper_hunter.py) | Local CLI / API | 🟢 Zero-Skip Multi-Source Resolver | 5-Tier waterfall resolver (Europe PMC fullTextXML REST API, direct binary PDF stream with `%PDF-` validation, Unpaywall, abstract fallback). |
 | **Paper Ledger** | [`paper_ledger.json`](paper_ledger.json) | Local Disk (JSON) | 🟢 Active | Normalized Jaccard + slug duplicate detector prevents duplicate paper extraction across sessions (16 papers tracked). |
 
